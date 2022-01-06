@@ -1,29 +1,30 @@
-import requests
+# standard library
 import zipfile
 from re import search
-from os import remove
-from sys import argv
+from os import remove,chdir
+from sys import argv,exit as sys_exit
 from difflib import SequenceMatcher
+# third party library
+import requests
 from bs4 import BeautifulSoup as bs
 
 # help
 if "-h" in argv or "--help" in argv:
-    print("""Subscene to mpv usage:\n\tsub \'tv show name\'\nfor example:\n\tsub \'breaking.bad.s01e07\'""")
-    exit(0)
+    print("Subscene to mpv usage:\n\tsub \'tv show name\'\nfor example:\n\tsub \'breaking.bad.s01e07\'")
+    sys_exit(0)
 
 # split name to actual_name/season/episode
 def get_s_ep(name):
-    s_ep = [name[:name.index(search('s\d\d|S\d\d',name).group())],search('s\d\d|S\d\d',name).group(),search('e\d\d|E\d\d',name).group()]
+    s_ep = [name[:name.index(search(r's\d\d|S\d\d',name).group())],search(r's\d\d|S\d\d',name).group(),search(r'e\d\d|E\d\d',name).group()]
     return s_ep
 
 # scrap func
 def scrape(url,name=""):
     if name:
         soup = bs(requests.get(url,params={'query':name}).content,'html.parser')
-        return soup
     else:
         soup = bs(requests.get(url).content,'html.parser')
-        return soup
+    return soup
 
 # query url func
 def get_query_url(soup,target,season):
@@ -37,7 +38,7 @@ def get_query_url(soup,target,season):
                 return urls[names.index(i[0]+'-'+i[1])].get('href')
         elif i == split_names[-1]:
             print('not found!')
-            exit(0)
+            sys_exit(0)
                 
 # episode url func
 def ep_url(soup,get_url,ep):
@@ -48,13 +49,16 @@ def ep_url(soup,get_url,ep):
                 return i.get('href')
         elif i == urls[-1]:
             print('not found!')
-            exit(0)
+            sys_exit(0)
 
 # download subtitle func
 def dw_sub(soup):
-    div = dl_soup.find("div", {"class": "download"})
+    div = soup.find("div", {"class": "download"})
     down_link = "https://subscene.com" + div.find("a").get("href")
     down_sub = requests.get(down_link, stream=True).content
+    if '-d' in argv:
+        arg = argv.index('-d') + 1
+        chdir(argv[arg])
     with open('sub.zip','wb') as f:
         f.write(down_sub)
     with zipfile.ZipFile('sub.zip', "r") as f:
