@@ -9,7 +9,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 # help
-if "-h" in argv or "--help" in argv:
+if argv or "-h" in argv or "--help" in argv :
     print("Subscene to mpv usage:\n\tsub \'tv show name\'\nfor example:\n\tsub \'breaking.bad.s01e07\'")
     sys_exit(0)
 
