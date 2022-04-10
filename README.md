@@ -27,3 +27,6 @@ you can use submpv.py as sperated script to download subtitle from subscence
 python3 submpv.lua "Tv.show.name.S01E07" # this example is the best way to get good resault, with "." rather then spaces
 ```
 
+## Todo List
+
+- [ ] add support for movies

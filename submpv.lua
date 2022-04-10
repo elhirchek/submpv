@@ -6,14 +6,14 @@ function log(string,secs)
 end
 
 -- download/load function
-function sub()
+function submpv()
 	log('search for arabic subtitle!')
 	local utils = require 'mp.utils'
 	--get directory and filename
 	local d,f = utils.split_path(mp.get_property('path'))
 	-- run command and capture stdout
 	local openPop = assert(io.popen('/bin/python /home/usr/path/subscene_to_mpv.py -d '.. d ..' \''..f..'\'', 'r')) -- path to script
-	local output = openPop:read('*all')
+	local output = openPop:read('*a')
 	openPop:close()
 	-- check stdout 
 	if string.find(output, 'done') then
@@ -25,4 +25,4 @@ function sub()
 		log('Arabic subtitles not found!')
 	end
 end
-mp.add_key_binding('g','sub',sub)
+mp.add_key_binding('/','submpv',submpv)

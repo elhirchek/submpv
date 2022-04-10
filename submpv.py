@@ -9,8 +9,8 @@ import requests
 from bs4 import BeautifulSoup as bs
 
 # help
-if argv or "-h" in argv or "--help" in argv :
-    print("Subscene to mpv usage:\n\tsub \'tv show name\'\nfor example:\n\tsub \'breaking.bad.s01e07\'")
+if len(argv) == 1 or "-h" in argv or "--help" in argv :
+    print("Subscene to mpv usage:\n\tsubmpv \'tv show name\'\nfor example:\n\tsubmpv \'breaking.bad.s01e07\'")
     sys_exit(0)
 
 # split name to actual_name/season/episode
@@ -21,9 +21,9 @@ def get_s_ep(name):
 # scrap func
 def scrape(url,name=""):
     if name:
-        soup = bs(requests.get(url,params={'query':name}).content,'html.parser')
+        soup = bs(requests.get(url,params={'query':name},headers=headers).content,'html.parser')
     else:
-        soup = bs(requests.get(url).content,'html.parser')
+        soup = bs(requests.get(url,headers=headers).content,'html.parser')
     return soup
 
 # query url func
@@ -55,7 +55,7 @@ def ep_url(soup,get_url,ep):
 def dw_sub(soup):
     div = soup.find("div", {"class": "download"})
     down_link = "https://subscene.com" + div.find("a").get("href")
-    down_sub = requests.get(down_link, stream=True).content
+    down_sub = requests.get(down_link,headers=headers, stream=True).content
     if '-d' in argv:
         arg = argv.index('-d') + 1
         chdir(argv[arg])
@@ -64,13 +64,16 @@ def dw_sub(soup):
     with zipfile.ZipFile('sub.zip', "r") as f:
         f.extractall()
     remove('sub.zip')
-    print('done')
+    print('done',end='')
 
 # Variables
 search_url = 'https://subscene.com/subtitles/searchbytitle'
 url = 'https://subscene.com'
 name = argv[-1]
 s_ep = get_s_ep(name)
+headers = {
+        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+        }
 
 # query
 query_soup = scrape(search_url,s_ep[0])
