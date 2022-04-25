@@ -28,5 +28,4 @@ python3 submpv.lua "Tv.show.name.S01E07" # this example is the best way to get g
 ```
 
 ## Todo List
-
-- [ ] add support for movies
+- [x] add support for movies

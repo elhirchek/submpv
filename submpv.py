@@ -1,64 +1,92 @@
 # standard library
+import argparse
 import zipfile
 from re import search
 from os import remove,chdir
 from sys import argv,exit as sys_exit
 from difflib import SequenceMatcher
 # third party library
+from guessit import guessit
 import requests
 from bs4 import BeautifulSoup as bs
 
 # help
-if len(argv) == 1 or "-h" in argv or "--help" in argv :
-    print("Subscene to mpv usage:\n\tsubmpv \'tv show name\'\nfor example:\n\tsubmpv \'breaking.bad.s01e07\'")
-    sys_exit(0)
+parser = argparse.ArgumentParser(
+    description="submpv is a dow/add sub from subscence",
+    epilog="Author:yassi-l",
+)
+parser.add_argument('name',help='the show name to download sub for should be in \"\" with no spaces like:"name.sxex"')
+parser.add_argument('-d','--directory',metavar="",type=str,help='choose where to download sub by default:current directory')
+parser.add_argument('-l','--lang',metavar="",choices=['ar','en'],help='select which language to filter with',default='ar')
+args = parser.parse_args()
 
-# split name to actual_name/season/episode
-def get_s_ep(name):
-    s_ep = [name[:name.index(search(r's\d\d|S\d\d',name).group())],search(r's\d\d|S\d\d',name).group(),search(r'e\d\d|E\d\d',name).group()]
-    return s_ep
+# var
+url = 'https://subscene.com'
+headers = {
+        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+        }
 
 # scrap func
-def scrape(url,name=""):
+def scrape(url:str=None,name:str=None): 
     if name:
-        soup = bs(requests.get(url,params={'query':name},headers=headers).content,'html.parser')
+        url = 'https://subscene.com/subtitles/searchbytitle'
+        request = requests.get(url,params={'query':name},headers=headers)
+        if request.status_code == 200:
+            soup = bs(request.content,'html.parser')
     else:
-        soup = bs(requests.get(url,headers=headers).content,'html.parser')
-    return soup
+        request = requests.get(url,headers=headers)
+        if request.status_code == 200:
+            soup = bs(request.content,'html.parser')
+    if soup:
+        return soup
+    print('connection error try again')
+    sys_exit()
 
-# query url func
-def get_query_url(soup,target,season):
-    sea = {'S01':' First','S02':' Second','S03':' Third','S04':' Fourth','S05':' Fifth','S06':' Sixth','S07':' Seventh','S08':' Eighth'}
-    urls = [i for i in soup.find_all('a',href=True,limit=16) if str(i.get('href')).startswith('/subtitles')]
-    names = [i.text for i in urls]
-    split_names = [i.text.split('-') for i in urls]
-    for i in split_names:
-        if len(i)>=2:
-            if SequenceMatcher(None, i[0].lower(), target.lower()).ratio() >= 0.7 and str(i[1]).startswith(sea[season.upper()]):
-                return urls[names.index(i[0]+'-'+i[1])].get('href')
-        elif i == split_names[-1]:
-            print('not found!')
-            sys_exit(0)
-                
-# episode url func
-def ep_url(soup,get_url,ep):
-    urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{get_url}/arabic')]
-    for i in urls:
-        if search(r'e\d\d|e\d',i.span.find_next_sibling('span').text.lower()) != None:
-            if search(r'e\d\d|e\d',i.span.find_next_sibling('span').text.lower()).group().lower() == ep.lower():
+# get query url
+def get_query_url(soup,name):
+    if name['type'] == 'episode':
+        seasons = {1:' First',2:' Second',3:' Third',4:' Fourth',5:' Fifth',6:' Sixth',7:' Seventh',8:' Eighth'}
+        urls = [i for i in soup.find_all('a',href=True,limit=16) if str(i.get('href')).startswith('/subtitles')]
+        names = [i.text.split('-') for i in urls if len(i.text.split('-')) >= 2]
+        for x,i in enumerate(names):
+            if SequenceMatcher(None, i[0].lower(), name['title'].lower()).ratio() >= 0.7 and str(i[1]).startswith(seasons[name['season']]):
+                return urls[x].get('href')
+
+    elif name['type'] == 'movie':
+        urls = [i for i in soup.find_all('a',href=True,limit=16) if str(i.get('href')).startswith('/subtitles')] # add check for the year
+        names = [i.text for i in urls]
+        for x,i in enumerate(names):
+            if SequenceMatcher(None, i.lower(), name['title'].lower()).ratio() >= 0.8:
+                return urls[x].get('href')
+
+    print('not found')
+    sys_exit(0)
+
+## get episode url 
+def ep_url(url:str,soup,name):
+    if name['type'] == 'episode':
+        langs = {'ar':'arabic','en':'english'}
+        urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{url}/{langs[args.lang]}')]
+        for i in urls:
+            _name = search(r'e{n}'.format(n=name['episode']),i.span.find_next_sibling('span').text.lower())
+            if _name and _name.group() == 'e'+str(name['episode']):
                 return i.get('href')
-        elif i == urls[-1]:
-            print('not found!')
-            sys_exit(0)
+    elif name['type'] == 'movie':
+        urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{url}/{args.lang}')]
+        for i in urls:
+            _name = search(r'{}'.format(name['title']),i.span.find_next_sibling('span').text.lower())
+            if _name:
+                return i.get('href')
+    print('not found!')
+    sys_exit(0)
 
-# download subtitle func
+## download subtitle 
 def dw_sub(soup):
     div = soup.find("div", {"class": "download"})
-    down_link = "https://subscene.com" + div.find("a").get("href")
+    down_link = url + div.find("a").get("href")
     down_sub = requests.get(down_link,headers=headers, stream=True).content
-    if '-d' in argv:
-        arg = argv.index('-d') + 1
-        chdir(argv[arg])
+    if args.directory:
+        chdir(args.directory)
     with open('sub.zip','wb') as f:
         f.write(down_sub)
     with zipfile.ZipFile('sub.zip', "r") as f:
@@ -66,23 +94,19 @@ def dw_sub(soup):
     remove('sub.zip')
     print('done',end='')
 
-# Variables
-search_url = 'https://subscene.com/subtitles/searchbytitle'
-url = 'https://subscene.com'
-name = argv[-1]
-s_ep = get_s_ep(name)
-headers = {
-        "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
-        }
+def main():
+    # parsing giving name
+    name = guessit(args.name)
 
-# query
-query_soup = scrape(search_url,s_ep[0])
-query_url = get_query_url(query_soup,s_ep[0],s_ep[1])
+    # get sub first page
+    first_url = get_query_url(scrape(name=name['title']),name)
 
-# find match ep
-ep_soup = scrape(url+query_url)
-ep_url = ep_url(ep_soup,query_url,s_ep[-1])
+    # getting episode url
+    episode_url = ep_url(first_url,scrape(url+first_url),name)
 
-# download sub
-dl_soup = scrape(url+ep_url)
-dw_sub(dl_soup)
+    # downloading subtitle
+    dw_sub(scrape(url+episode_url))
+
+
+if __name__ == "__main__":
+    main()
