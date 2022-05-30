@@ -20,6 +20,7 @@ mv submpv.lua $HOME/.config/mpv/scripts
 ### Note
 
 you can use submpv.py as sperated script to download subtitle from subscence
+> Plus you need to specify `python_path` and `submpv_path` both on submpv.lua file.
 
 ### Usage of submpv.py
 

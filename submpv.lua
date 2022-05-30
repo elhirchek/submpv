@@ -1,3 +1,9 @@
+-- submpv lua script
+-- ===================|
+
+local python_path = '' -- path to python bin
+local submpv_path = '' -- path to submpv.py script 
+
 -- Log function: log to both terminal and MPV OSD (On-Screen Display)
 function log(string,secs)
 	secs = secs or 2.5
@@ -12,7 +18,7 @@ function submpv()
 	--get directory and filename
 	local d,f = utils.split_path(mp.get_property('path'))
 	-- run command and capture stdout
-	local openPop = assert(io.popen('/bin/python /home/usr/path/subscene_to_mpv.py -d '.. d ..' \''..f..'\'', 'r')) -- path to script
+	local openPop = assert(io.popen(..python_path..''..submpv_path..' -d '.. d ..' \''..f..'\'', 'r')) -- path to script
 	local output = openPop:read('*a')
 	openPop:close()
 	-- check stdout 
