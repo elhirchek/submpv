@@ -57,7 +57,7 @@ def get_query_url(soup,name):
         #a = get_close_matches(f'{name["title"]} ({name["year"]})',names)
         for x,i in enumerate(names):
             if name['year']:
-                if SequenceMatcher(None, i.lower(), f'{name["title"]} ({name["year"]})').ratio() >= 0.9:
+                if SequenceMatcher(None, i.lower(), f'{name["title"]} ({name["year"]})'.lower()).ratio() >= 0.9:
                     return urls[x].get('href')
             else:
                 if SequenceMatcher(None, i.lower(), name['title'].lower()).ratio() >= 0.7:

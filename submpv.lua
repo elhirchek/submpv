@@ -1,8 +1,11 @@
 -- submpv lua script
 -- ===================|
 
-local python_path = '' -- path to python bin
-local submpv_path = '' -- path to submpv.py script 
+-- note to escape path for winodws (c:\\users\\user\\...)
+local python_path = '/usr/bin/python' -- path to python bin
+local scripts_path = '/home/mrvf/.config/mpv/scripts' -- path to scripts folder 
+local submpv_path = ''..scripts_path..'/submpv/submpv.py' -- don't change this one
+local utils = require 'mp.utils'
 
 -- Log function: log to both terminal and MPV OSD (On-Screen Display)
 function log(string,secs)
@@ -14,15 +17,21 @@ end
 -- download/load function
 function submpv()
 	log('search for arabic subtitle!')
-	local utils = require 'mp.utils'
+
 	--get directory and filename
-	local d,f = utils.split_path(mp.get_property('path'))
+	local directory,filename = utils.split_path(mp.get_property('path'))
+    local table = { args = { python_path } }
+    local a = table.args
+
+	a[#a + 1] = submpv_path
+	a[#a + 1] = '-d'
+	a[#a + 1] = directory
+	a[#a + 1] = filename --> submpv command ends with the movie/tvshow name/filename
+
 	-- run command and capture stdout
-	local openPop = assert(io.popen(..python_path..''..submpv_path..' -d '.. d ..' \''..f..'\'', 'r')) -- path to script
-	local output = openPop:read('*a')
-	openPop:close()
-	-- check stdout 
-	if string.find(output, 'done') then
+	local result = utils.subprocess(table)
+
+	if string.find(result.stdout, 'done') then
 		log('Arabic subtitles ready!')
 		-- to make sure all downloaded subtitle loaded
 		mp.set_property('sub-auto', 'all')
@@ -31,4 +40,4 @@ function submpv()
 		log('Arabic subtitles not found!')
 	end
 end
-mp.add_key_binding('/','submpv',submpv)
+mp.add_key_binding(nil,'submpv',submpv)
