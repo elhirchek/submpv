@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 # standard library
 import argparse
 import zipfile
@@ -43,37 +45,32 @@ def scrape(url:str=None,name:str=None):
 
 # get query url
 def get_query_url(soup,name):
-    if name['type'] == 'episode':
-        seasons = {1:' First',2:' Second',3:' Third',4:' Fourth',5:' Fifth',6:' Sixth',7:' Seventh',8:' Eighth'}
+    if name.get('type',None) == 'episode':
+        seasons = {1:'first-season',2:'second-season',3:'third-season',4:'fourth-season',5:'fifth-season',6:'sixth-Season',7:'seventh-season',8:'eighth-season'}
         urls = [i for i in soup.find_all('a',href=True,limit=16) if str(i.get('href')).startswith('/subtitles')]
-        names = [i.text.split('-') for i in urls if len(i.text.split('-')) >= 2]
-        for x,i in enumerate(names):
-            if SequenceMatcher(None, i[0].lower(), name['title'].lower()).ratio() >= 0.7 and str(i[1]).startswith(seasons[name['season']]):
-                return urls[x].get('href')
+        matches = [SequenceMatcher(None,i.get('href'),f"{name['title']}-{seasons[name['season']]}").ratio() for i in urls]
+        return urls[matches.index(max(matches))].get('href')
 
     else:
         urls = [i for i in soup.find_all('a',href=True,limit=16) if str(i.get('href')).startswith('/subtitles')]
-        names = [i.text for i in urls]
-        #a = get_close_matches(f'{name["title"]} ({name["year"]})',names)
-        for x,i in enumerate(names):
-            if name['year']:
-                if SequenceMatcher(None, i.lower(), f'{name["title"]} ({name["year"]})'.lower()).ratio() >= 0.9:
-                    return urls[x].get('href')
-            else:
-                if SequenceMatcher(None, i.lower(), name['title'].lower()).ratio() >= 0.7:
-                    return urls[x].get('href')
+        if name.get('year',None):
+            matches = [SequenceMatcher(None,i.text,f"{name['title']} - ({name['year']})").ratio() for i in urls]
+        else:
+            matches = [SequenceMatcher(None,i.text,f"{name['title']})").ratio() for i in urls]
+        return urls[matches.index(max(matches))].get('href')
 
     print('not found')
     sys_exit(0)
 
 ## get episode url 
 def ep_url(url:str,soup,name):
-    if name['type'] == 'episode':
-        langs = {'ar':'arabic','en':'english'}
-        urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{url}/{langs[args.lang]}')]
+    if name.get('type',None) == 'episode':
+        langs = {'ar':'arabic','en':'english','fr':'french'}
+        urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{url}/{langs.get("args.lang","ar")}')]
+        num = f"0{name['episode']}" if len(str(name['episode'])) < 2 else name['episode']
         for i in urls:
-            _name = search(r'e{n}'.format(n=name['episode']),i.span.find_next_sibling('span').text.lower())
-            if _name and _name.group() == 'e'+str(name['episode']):
+            _name = search(r'e?{n}'.format(n=num),i.span.find_next_sibling('span').text.lower())
+            if _name:
                 return i.get('href')
     else:
         urls = [i for i in soup.find_all('a',href=True) if str(i.get('href')).startswith(f'{url}/{args.lang}')]
@@ -82,7 +79,7 @@ def ep_url(url:str,soup,name):
         #for i in urls:
         #    if search(r'{}'.format(name['title']).lower(),i.span.find_next_sibling('span').text.lower()):
         #        _name.append(i.get('href'))
-        if name['source']:
+        if name.get('source',None):
             for i in urls:
                 _name = search(r'{}'.format(name['title']).lower(),i.span.find_next_sibling('span').text.lower())
                 _source = search(r'{}'.format(name['source']).lower(),i.span.find_next_sibling('span').text.lower())
@@ -107,10 +104,9 @@ def dw_sub(soup):
     with zipfile.ZipFile('sub.zip', "r") as f:
         f.extractall()
     remove('sub.zip')
-    print('done',end='')
+    print('done')
 
 def main():
-    #breakpoint()
     # parsing giving name
     name = guessit(args.name)
 
