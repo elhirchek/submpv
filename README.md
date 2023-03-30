@@ -17,7 +17,7 @@ apt install python3 -y
 
 ### Windows
 
-Install the zip file from github and extract the folder in **[Drive]:\Users\[User]\AppData\Roaming\mpv\scripts\**.
+Install the zip file from github and extract the folder in **[Drive]:\Users\[User]\AppData\Roaming\mpv\scripts\\**.
 
 ### Linux
 ```bash
@@ -30,7 +30,9 @@ pip install -r requirements.txt
 ### Note
 
 > make sure to add the python path by editing the main.lua file, change the /bin/python path inside [[]] to your python path.
+
 > add this line to your input.conf **[key] script-binding "submpv"**, where key is your key.
+
 > you can use submpv.py as sperated script to download subtitle from subscence.
 
 ### Usage of submpv.py

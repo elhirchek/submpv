@@ -8,7 +8,7 @@ local utils = require 'mp.utils'
 -- Log function: log to both terminal and MPV OSD (On-Screen Display)
 function log(level,string,secs)
 	secs = secs or 2.5
-	mp.msg(level,string)
+	mp.msg.log(level,string)
 	mp.osd_message(string,secs)
 end
 
