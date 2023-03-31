@@ -19,6 +19,13 @@ apt install python3 -y
 
 Install the zip file from github and extract the folder in **[Drive]:\Users\[User]\AppData\Roaming\mpv\scripts\\**.
 
+```bash
+# to get python path run the following command:
+where python
+# open cmd in the directory of this script and run:
+pip install -r requirements.txt
+```
+
 ### Linux
 ```bash
 git clone https://github.com/yassin-l/submpv.git
@@ -29,7 +36,7 @@ pip install -r requirements.txt
 
 ### Note
 
-> make sure to add the python path by editing the main.lua file, change the /bin/python path inside [[]] to your python path.
+> change the /bin/python path inside [[]] in the main.lua file to your python path.
 
 > add this line to your input.conf **[key] script-binding "submpv"**, where key is your key.
 
@@ -42,5 +49,6 @@ python3 submpv.lua "Tv.show.name.S01E07"
 ```
 
 ## Todo List
-- [x] add support for movies
-- [ ] add config file
+- [x] support for movies
+- [ ] renaming subtitle as the target name ( by [ayghub](https://github.com/ayghub/) ).
+- [ ] config file
