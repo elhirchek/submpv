@@ -17,7 +17,7 @@ apt install python3 -y
 
 ### Windows
 
-Install the zip file from github and extract the folder in **[Drive]:\Users\[User]\AppData\Roaming\mpv\scripts\\**.
+Install the zip file from github and extract the folder in **[Drive]:\Users\\[User]\AppData\Roaming\mpv\scripts\\**.
 
 ```bash
 # to get python path run the following command:
