@@ -1,5 +1,9 @@
 # Submpv
 
+# Note
+
+This project is no longer supported nor working due to Subscene being closed.
+
 ## Overview 
 
 **submpv** is a python script to automate downloading and loading subtitle from subscence.
